@@ -9,30 +9,42 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
   exit;
 } else {
   try{
-    $query = "select user_id, thresholds_up_to_date, intervals_up_to_date from Users where username ='{$_SERVER['PHP_AUTH_USER']}'";
-    $user = mysqli_query($con,$query);
 
-    if($user->num_rows !=null && $user->num_rows >0){
-      $user_res = mysqli_fetch_row($user);
-      $query_update_status = "update Users set active = 1 where username ='{$_SERVER['PHP_AUTH_USER']}'";
-      mysqli_query($con,$query_update_status);
-      if($_SERVER['PHP_AUTH_PW'] == 'v3Ry$t0ngP@$$w0rd!'){
 
-        $json = file_get_contents('php://input');
-        $result = json_decode($json,true);
+   $user_thresholds_up_to_date = 0;
+   $user_intervals_up_to_date = 0;
 
-        foreach($result as $key => $res){
-          try{
-            $con->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
-            $query_package = "select app_id from Apps where package_name = '".$res['appName']."'";
-            $app = mysqli_query($con,$query_package);
-            if($app->num_rows == null){
-              $query_insert_package = "insert into Apps(package_name) values ('".$res['appName']."')";
-              if(mysqli_query($con,$query_insert_package)){
-                $app = mysqli_query($con,$query_package);
-              }
+
+   $query = "select user_id, thresholds_up_to_date, intervals_up_to_date from Users where username ='{$_SERVER['PHP_AUTH_USER']}'";
+   $user = mysqli_query($con,$query);
+
+   if($user->num_rows !=null && $user->num_rows >0){
+    $user_res = mysqli_fetch_row($user);
+
+    $user_thresholds_up_to_date = (int) $user_res[1];
+    $user_intervals_up_to_date = (int) $user_res[2];
+
+
+
+    $query_update_status = "update Users set active = 1 where username ='{$_SERVER['PHP_AUTH_USER']}'";
+    mysqli_query($con,$query_update_status);
+    if($_SERVER['PHP_AUTH_PW'] == 'v3Ry$t0ngP@$$w0rd!'){
+
+      $json = file_get_contents('php://input');
+      $result = json_decode($json,true);
+
+      foreach($result as $key => $res){
+        try{
+          $con->begin_transaction(MYSQLI_TRANS_START_READ_WRITE);
+          $query_package = "select app_id from Apps where package_name = '".$res['appName']."'";
+          $app = mysqli_query($con,$query_package);
+          if($app->num_rows == null){
+            $query_insert_package = "insert into Apps(package_name) values ('".$res['appName']."')";
+            if(mysqli_query($con,$query_insert_package)){
+              $app = mysqli_query($con,$query_package);
             }
-            $app_res = mysqli_fetch_row($app);
+          }
+          $app_res = mysqli_fetch_row($app);
             $query_user_app = "select ua_id from user_apps where app_id = $app_res[0] and user_id = $user_res[0]"; //[0]
             $user_app = mysqli_query($con,$query_user_app);
 
@@ -87,12 +99,17 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
 
       $updt_thresh = 0;
       $updt_intv = 0;
-      if((int)$user_res[1] == 1 && (int)$update_threshold_val[0] == 1){
+
+
+      if($user_thresholds_up_to_date == 0 && (int)$update_threshold_val[0] == 1){
         $updt_thresh = 1;
       }
-      if((int)$user_res[2] == 1 && (int)$update_interval_val[0] == 1){
+      if($user_intervals_up_to_date == 0 && (int)$update_interval_val[0] == 1){
         $updt_intv = 1;
       }
+      
+
+      
       echo json_encode(array('status'=>'success','update_interval'=>$updt_intv,'update_threshold'=>$updt_thresh));
       exit();
     }

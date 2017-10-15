@@ -1,8 +1,8 @@
 <?php
 $host = "localhost";
-$user = "crowdappuser";
-$pass = "PD1GmA6a@HHunYH3";
-$dbname = "crowdappdb";
+$user = "root";
+$pass = "";
+$dbname = "crowdappdb_t";
 
 $con = mysqli_connect($host,$user,$pass,$dbname);
 

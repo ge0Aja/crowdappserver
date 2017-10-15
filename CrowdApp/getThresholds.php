@@ -27,7 +27,7 @@ else{
           $thrsh_array[$res['package_name']][$res['feature_name']]['std'] = $res['std'];
 
         }
-        $query2 = "select  f.feature_name,f.average_value as mean, f.std_value as std from features f ";
+        $query2 = "select  f.feature_name,f.average_value as mean, f.std_value as std from features f where average_value > 0 ";
         $results2 = mysqli_query($con,$query2);
 
         if($results2->num_rows !=null && $results2->num_rows >0){

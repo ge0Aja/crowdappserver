@@ -17,7 +17,7 @@ else{
     mysqli_query($con,$query_update_status);
     if($_SERVER['PHP_AUTH_PW'] == 'v3Ry$t0ngP@$$w0rd!'){
 
-      $query = "select ifnull(app_name,package_name) as name , app_reputation_normalized from Apps join user_apps ua on Apps.app_id = ua.app_id  where user_id = $user_res[0] and Apps.package_name not like 'com.farah.heavyservice'"; //
+      $query = "select ifnull(app_name,package_name) as name , app_reputation_normalized from Apps join user_apps ua on Apps.app_id = ua.app_id  where user_id = $user_res[0] and Apps.package_name not like 'com.farah.heavyservice' order by name asc"; //
       $results = mysqli_query($con,$query);
       $thrsh_array = array();
       if($results->num_rows !=null && $results->num_rows >0){

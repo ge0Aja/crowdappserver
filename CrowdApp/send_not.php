@@ -34,7 +34,7 @@ $row = mysqli_fetch_row($result);
 //~ print_r($row);
 $sql_getquestion = "select title,question,message,type from questions_types join questions on questions.qt_id = questions_types.qt_id where questions_types.qt_id =".$row[1]." group by questions_types.type";
 $sql_getuser = "select fcm_token from Users where user_id =".$row[2];
-$sql_getapp = "select app_name from Apps where app_id =".$row[0];
+$sql_getapp = "select app_name,package_name from Apps where app_id =".$row[0];
 
 $result_question = mysqli_query($con,$sql_getquestion);
 
@@ -47,8 +47,12 @@ $row_user = mysqli_fetch_row($result_user);
 $result_app = mysqli_query($con,$sql_getapp);
 $row_app = mysqli_fetch_row($result_app);
 
+if($row_app[0] != ""){
+	$title = str_replace("{app}",$row_app[0],$row_question[0]);
+}else{
+	$title = str_replace("{app}",$row_app[1],$row_question[0]);
+}
 
-$title = str_replace("{app}",$row_app[0],$row_question[0]);
 $question = $row_question[1];
 
 
@@ -73,52 +77,52 @@ $message = str_replace($to_replace_message,$rep_with_message,$row_question[2]);
 //~ print_r($title. ' '. $question . '  '. $message. '  '. $Qid. ' '. $alert_type.'  ' .$user  );
 
 $path_for_fcm = 'https://fcm.googleapis.com/fcm/send';
-	$server_key = "AIzaSyDZLT3gRBjLXTpDuLBrW1aAMhZLd4dvess";
+$server_key = "AIzaSyDZLT3gRBjLXTpDuLBrW1aAMhZLd4dvess";
 
-	$headers = array(
-		'Authorization:key='.$server_key,
-		'Content-Type:application/json'
+$headers = array(
+	'Authorization:key='.$server_key,
+	'Content-Type:application/json'
 	);
 
 	//$fields = array('to'=>$key,
 	//	'notification'=>array('title'=>$title, 'body'=>$message),'data'=>array('type'=>'1','Qid'=>'1','question'=>'How Are you!'));
 
-	$fields = array('to'=>$user,
-	'data'=>array('title'=>$title,'body'=>$message,'type'=>$alert_type,'Qid'=>$Qid,'question'=>$question));
+$fields = array('to'=>$user,
+	'data'=>array('master_type' => 'Q','title'=>$title,'body'=>$message,'type'=>$alert_type,'Qid'=>$Qid,'question'=>$question));
 
-	$payload = json_encode($fields);
+$payload = json_encode($fields);
 
 	//print_r($payload."<br/>");
 
-	$curl_session = curl_init();
+$curl_session = curl_init();
 
 	//print_r($curl_session."<br/>");
 
 
-	curl_setopt($curl_session, CURLOPT_URL, $path_for_fcm);
-	curl_setopt($curl_session, CURLOPT_POST, true);
-	curl_setopt($curl_session, CURLOPT_HTTPHEADER, $headers);
-	curl_setopt($curl_session, CURLOPT_RETURNTRANSFER, true);
-	curl_setopt($curl_session, CURLOPT_SSL_VERIFYPEER, false);
-	curl_setopt($curl_session, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-	curl_setopt($curl_session, CURLOPT_POSTFIELDS, $payload);
+curl_setopt($curl_session, CURLOPT_URL, $path_for_fcm);
+curl_setopt($curl_session, CURLOPT_POST, true);
+curl_setopt($curl_session, CURLOPT_HTTPHEADER, $headers);
+curl_setopt($curl_session, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($curl_session, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($curl_session, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+curl_setopt($curl_session, CURLOPT_POSTFIELDS, $payload);
 
-	$not_res = curl_exec($curl_session);
+$not_res = curl_exec($curl_session);
 
-	$json_not_res =  json_decode($not_res,true);
+$json_not_res =  json_decode($not_res,true);
 
-	if ($json_not_res['failure'] == 1){
-		if(isset($json_not_res['results'][0]['error']) && $json_not_res['results'][0]['error'] == 'NotRegistered'){
-			$query_update_user = "update Users set active = 0 where user_id = ".$row[2];
-			if(mysqli_query($con,$query_update_user)){
-				echo "User is not active any more";
-			}
-
+if ($json_not_res['failure'] == 1){
+	if(isset($json_not_res['results'][0]['error']) && $json_not_res['results'][0]['error'] == 'NotRegistered'){
+		$query_update_user = "update Users set active = 0 where user_id = ".$row[2];
+		if(mysqli_query($con,$query_update_user)){
+			echo "User is not active any more";
 		}
+
 	}
+}
 
-	curl_close($curl_session);
-	mysqli_close($con);
-	exit();
+curl_close($curl_session);
+mysqli_close($con);
+exit();
 
-	?>
+?>

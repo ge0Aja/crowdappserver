@@ -9,11 +9,21 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
   exit;
 } else {
   try{
+
+    $user_thresholds_up_to_date = 0;
+    $user_intervals_up_to_date = 0;
+
     $query = "select user_id, thresholds_up_to_date, intervals_up_to_date from Users where username ='{$_SERVER['PHP_AUTH_USER']}'";
     $user = mysqli_query($con,$query);
 
     if($user->num_rows !=null && $user->num_rows >0){
       $user_res = mysqli_fetch_row($user);
+
+            $user_thresholds_up_to_date = (int) $user_res[1];
+      $user_intervals_up_to_date = (int) $user_res[2];
+
+
+
       $query_update_status = "update Users set active = 1 where username ='{$_SERVER['PHP_AUTH_USER']}'";
       mysqli_query($con,$query_update_status);
       if($_SERVER['PHP_AUTH_PW'] == 'v3Ry$t0ngP@$$w0rd!'){
@@ -67,12 +77,14 @@ if (!isset($_SERVER['PHP_AUTH_USER'])) {
 
       $updt_thresh = 0;
       $updt_intv = 0;
-      if((int)$user_res[1] == 1 && (int)$update_threshold_val[0] == 1){
+
+      if($user_thresholds_up_to_date == 0 && (int)$update_threshold_val[0] == 1){
         $updt_thresh = 1;
       }
-      if((int)$user_res[2] == 1 && (int)$update_interval_val[0] == 1){
+      if($user_intervals_up_to_date == 0 && (int)$update_interval_val[0] == 1){
         $updt_intv = 1;
       }
+      
       echo json_encode(array('status'=>'success','update_interval'=>$updt_intv,'update_threshold'=>$updt_thresh));
       exit();
     }
